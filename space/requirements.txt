@@ -1,0 +1,9 @@
+torch
+transformers>=4.56
+timm
+opencv-python-headless
+numpy
+pandas
+matplotlib
+huggingface_hub
+tabulate
