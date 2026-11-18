@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SoilSight · grain size from tray photos</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Computer vision · geotechnics</p>
+    <h1>SoilSight</h1>
+    <p class="lede">Estimates a soil sample's <b>gravel / sand / fines</b> fractions from lab tray photos, with a calibrated
+      range, a <b>review flag</b> when it is unsure, the <b>most similar lab-tested samples</b> as evidence, and a
+      <b>grain-size heatmap</b>. Below are the model's real outputs on <span id="n-test">63</span> held-out test samples
+      it never saw during training, next to their laboratory sieve results.</p>
+    <div class="stats" id="stats"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="browser">
+    <aside class="list-panel">
+      <div class="controls">
+        <div class="seg" id="filter">
+          <button data-f="all" class="on">All</button>
+          <button data-f="accepted">Accepted</button>
+          <button data-f="review">Review</button>
+        </div>
+        <label class="sort">Sort
+          <select id="sort">
+            <option value="id">Sample ID</option>
+            <option value="fines">Fines content</option>
+            <option value="err">Error (largest first)</option>
+          </select>
+        </label>
+      </div>
+      <div class="list" id="list"></div>
+    </aside>
+
+    <article class="detail" id="detail"></article>
+  </section>
+
+  <section class="about">
+    <div class="col">
+      <h2>How it works</h2>
+      <ol class="steps">
+        <li><b>Find the soil.</b> The tray is masked out; 12 full-resolution crops (~30 mm each, ~40 µm per pixel) and an overview are taken from inside it.</li>
+        <li><b>Describe it.</b> Two frozen DINOv3 vision models (Meta) turn crops and overview into feature vectors. Nothing is fine-tuned.</li>
+        <li><b>Estimate.</b> A ridge regression trained on ~250 lab-tested samples predicts the three fractions; photos of one sample are averaged.</li>
+        <li><b>Say how sure it is.</b> A conformal range scaled by how much the 10 most similar lab samples disagree with each other. Wide ranges are flagged for a technician.</li>
+        <li><b>Show the evidence.</b> The five most similar lab-tested samples and their real sieve curves.</li>
+        <li><b>Show where.</b> The heatmap applies the same kind of linear model to every 16 px patch; patches average back to the photo's estimate.</li>
+      </ol>
+    </div>
+    <div class="col">
+      <h2>Model comparison</h2>
+      <p class="muted">5-fold cross-validation on 199 development samples. Mean absolute error in percentage points; lower is better.</p>
+      <div id="cv"></div>
+      <h2>Limits</h2>
+      <ul class="limits">
+        <li>Visual estimate only: no plasticity, so not an engineering soil classification. Lab tests are still needed.</li>
+        <li>Trained on Montréal-region soils photographed with one lab setup. Other cameras, distances or soils are outside what it has learned.</li>
+        <li>Boundaries follow the BNQ sieve series: gravel &gt; 5 mm, fines &lt; 0.08 mm.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <p>Data: Plante St-Cyr, T., Duhaime, F., Dubé, J.-S. &amp; Grenier, S. (2025). <i>Photogranulometry – Dataset of soil
+    images with corresponding particle size distributions</i> (v1.0). FRDR. doi:10.20383/103.01316. CC BY 4.0.
+    Photos on this page are derived from that dataset.</p>
+  <p id="model-version" class="muted"></p>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>
